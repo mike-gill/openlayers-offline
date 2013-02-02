@@ -1,0 +1,65 @@
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+
+<script type="text/javascript" src="lib/OpenLayers-2.12/lib/OpenLayers.js"></script>
+<script type="text/javascript" src="js/GeoStoreIndexedDb.js"></script>
+
+<script type="text/javascript">
+	var geoStore;
+	var format = new OpenLayers.Format.GeoJSON();
+	function init() {
+		geoStore = new OpenLayers.GeoStoreIndexedDb("TestDb6", 1, "TestFeatures");
+	}
+	
+	function clickInsert() {
+		var geom = OpenLayers.Geometry.fromWKT(
+			"MULTIPOLYGON(((0 0, 0 1, 1 1, 1 0, 0 0)),((2 2, 2 3, 3 3, 3 2, 2 2)))");
+		var feature = new OpenLayers.Feature.Vector(geom, {fid: 22, label: "Label"});
+		geoStore.putFeatures([feature, feature, feature], putCallback, this);
+	}
+	
+	function clickRead() {
+		geoStore.readFeature(parseInt(document.getElementById("recid").value), readCallback, this);
+	}
+	
+	function clickReadAll() {
+		geoStore.readAllFeatures(readAllCallback, this);
+	}
+	
+	function readCallback(feature) {
+		console.log(feature.geometry.getArea());
+	}
+	
+	function readAllCallback(features) {
+		for (var i = 0; i < features.length; i++) {
+			var textArea = document.getElementById("featureTextArea");
+			var txt = "";
+			try {
+				txt = document.createTextNode(format.write(features[i]) + "\n\n");
+				textArea.appendChild(txt);
+			} catch(e) {}
+			
+		}
+	}
+	
+	function putCallback() {
+		console.log("All inserted");
+	}
+	
+
+</script>
+
+</HEAD>
+<body onload="init()">
+	<input type="button" onclick="javascript:clickInsert();" value="Insert"/>
+	
+	Record id: <input id="recid"type="text"/> <input type="button" onclick="javascript:clickRead();" value="Read"/> <input type="button" onclick="javascript:clickReadAll();" value="ReadAll"/>
+	<br/>
+	<br/>
+	<textarea id="featureTextArea" rows="30" cols="100"></textarea>
+	
+</body>
+</HTML>
