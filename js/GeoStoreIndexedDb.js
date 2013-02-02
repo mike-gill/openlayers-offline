@@ -120,7 +120,18 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
 		};
 	},
 	
-	readAllFeatures: function(callback, scope) {
+	readFeatures: function(callback, scope, filter) {
+		var bounds = null;
+		if (filter) {
+			if (filter instanceof OpenLayers.Filter.Spatial && 
+				filter.type == OpenLayers.Filter.Spatial.BBOX &&
+				filter.value instanceof OpenLayers.Bounds) {
+				bounds = filter.value;
+			} else {
+				console.log("Filter not applied as was not BBOX filter");
+			}
+		}
+		
 		var features = [];
 		var format = this.format;
 		var store = this.getObjectStore(IDBTransaction.READ_ONLY);
@@ -128,7 +139,15 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
 		req.onsuccess = function(event) {
 			var cursor = event.target.result;
 			if (cursor) {
-				features.push(format.parseFeature(cursor.value));
+				var feature = format.parseFeature(cursor.value);
+				if (bounds) {
+					if (bounds.intersectsBounds(feature.geometry.getBounds())) {
+						features.push(feature);
+					}
+				} else {
+					features.push(feature);
+				}
+
 				cursor.continue();
 			} else {
 				callback.call(scope, features);
@@ -141,7 +160,6 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
 			console.error("readAllFeatures:", evt.target.errorCode);
 		};
 	}
-	
 
 });
 

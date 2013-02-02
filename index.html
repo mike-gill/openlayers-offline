@@ -15,10 +15,16 @@
 	}
 	
 	function clickInsert() {
-		var geom = OpenLayers.Geometry.fromWKT(
+		var geom1 = OpenLayers.Geometry.fromWKT(
 			"MULTIPOLYGON(((0 0, 0 1, 1 1, 1 0, 0 0)),((2 2, 2 3, 3 3, 3 2, 2 2)))");
-		var feature = new OpenLayers.Feature.Vector(geom, {fid: 22, label: "Label"});
-		geoStore.putFeatures([feature, feature, feature], putCallback, this);
+		var feature1 = new OpenLayers.Feature.Vector(geom1, {fid: 44, label: "Label44"});
+		var geom2 = OpenLayers.Geometry.fromWKT(
+			"MULTIPOLYGON(((10 10, 10 11, 11 11, 11 10, 10 10)),((12 12, 12 13, 13 13, 13 12, 12 12)))");
+		var feature2 = new OpenLayers.Feature.Vector(geom2, {fid: 45, label: "Label45"});
+		var geom3 = OpenLayers.Geometry.fromWKT(
+			"MULTIPOLYGON(((100 100, 100 101, 101 101, 101 100, 100 100)),((102 102, 102 103, 103 103, 103 102, 102 102)))");
+		var feature3 = new OpenLayers.Feature.Vector(geom3, {fid: 46, label: "Label46"});
+		geoStore.putFeatures([feature1, feature2, feature3], putCallback, this);
 	}
 	
 	function clickRead() {
@@ -26,20 +32,29 @@
 	}
 	
 	function clickReadAll() {
-		geoStore.readAllFeatures(readAllCallback, this);
+		geoStore.readFeatures(displayFeatures, this);
+	}
+	
+	function clickReadWithBounds() {
+		var filter = new OpenLayers.Filter.Spatial({
+            type: OpenLayers.Filter.Spatial.BBOX,
+            value: new OpenLayers.Bounds(12, 12, 101, 101)
+        });
+		geoStore.readFeatures(displayFeatures, this, filter);
 	}
 	
 	function readCallback(feature) {
 		console.log(feature.geometry.getArea());
+		displayFeatures([feature]);
 	}
 	
-	function readAllCallback(features) {
+	function displayFeatures(features) {
+		var textArea = document.getElementById("featureTextArea");
+		textArea.value = "";
 		for (var i = 0; i < features.length; i++) {
-			var textArea = document.getElementById("featureTextArea");
 			var txt = "";
 			try {
-				txt = document.createTextNode(format.write(features[i]) + "\n\n");
-				textArea.appendChild(txt);
+				textArea.value += format.write(features[i]) + "\n\n";
 			} catch(e) {}
 			
 		}
@@ -56,10 +71,10 @@
 <body onload="init()">
 	<input type="button" onclick="javascript:clickInsert();" value="Insert"/>
 	
-	Record id: <input id="recid"type="text"/> <input type="button" onclick="javascript:clickRead();" value="Read"/> <input type="button" onclick="javascript:clickReadAll();" value="ReadAll"/>
+	Record id: <input id="recid"type="text"/> <input type="button" onclick="javascript:clickRead();" value="Read"/> <input type="button" onclick="javascript:clickReadWithBounds();" value="ReadWithBounds"/> <input type="button" onclick="javascript:clickReadAll();" value="ReadAll"/>
 	<br/>
 	<br/>
-	<textarea id="featureTextArea" rows="30" cols="100"></textarea>
+	<textarea id="featureTextArea" rows="30" cols="100">Features will be displayed here</textarea>
 	
 </body>
 </HTML>
