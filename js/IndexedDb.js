@@ -10,8 +10,7 @@ if (!window.indexedDB) {
     window.alert("Your browser doesn't support a stable version of IndexedDB.");
 }
 
-OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
-{
+OpenLayers.Protocol.IndexedDb = OpenLayers.Class(OpenLayers.Protocol, {
 
     dbName: null,
     dbVersion: null,
@@ -19,15 +18,15 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
     db: {},
     format: null,
     
-    initialize: function(dbName, dbVersion, dbStoreName) {
+    initialize: function(dbName, dbVersion, dbStoreName, options) {
+        OpenLayers.Protocol.prototype.initialize.apply(this, [options]);
         this.dbName = dbName;
         this.dbVersion = dbVersion;
         this.dbStoreName = dbStoreName;
         this.format = new OpenLayers.Format.GeoJSON();
-        this.openDb();
     },
 
-    openDb: function () {
+    openDb: function (callback, scope) {
         var db = this.db;
         var dbStoreName = this.dbStoreName;
         console.log("openDb ...");
@@ -39,6 +38,10 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
             // db = req.result;
             db.db = req.result;
             console.log("openDb DONE");
+            
+            if (callback) {
+                callback.call(scope);
+            }
         };
         
         req.onerror = function(evt) {
@@ -80,7 +83,7 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
 
     },
     
-    _putFeature: function(store, features, index, callback, scope) {
+    _putFeature: function(store, features, index, options) {
         var thisObj = this;
         var feature = features[index];
         var geoJsonObj = JSON.parse(this.format.write(feature));
@@ -91,13 +94,21 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
         
         req.onsuccess = function(event) {
             console.log("Key: " + event.target.result);
+            // TODO - look at case where transaction could be rolled back,
+            // and impact on the following.
             features[index].key = event.target.result;
+            features[index].state = null;
             console.log("FeatureKey: " + features[index].key);
             index++;
             if (index < features.length) {
-                thisObj._putFeature(store, features, index, callback, scope);
+                thisObj._putFeature(store, features, index, options);
             } else {
-                callback.call(scope);
+                var response = new OpenLayers.Protocol.Response({
+                    code: OpenLayers.Protocol.Response.SUCCESS,
+                    requestType: "commit",
+                    reqFeatures: features
+                });
+                options.callback.call(options.scope, response);
             }
         };
         
@@ -106,9 +117,9 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
         };
     },
     
-    putFeatures: function(features, callback, scope) {
+    commit: function(features, options) {
         var store = this.getObjectStore(IDBTransaction.READ_WRITE);
-        this._putFeature(store, features, 0, callback, scope)
+        this._putFeature(store, features, 0, options)
     },
     
     readFeature: function(key, callback, scope) {
@@ -134,9 +145,14 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
         };
     },
     
-    readFeatures: function(callback, scope, filter) {
+    read: function(options) {
+        OpenLayers.Protocol.prototype.read.apply(this, arguments);
+        options = OpenLayers.Util.extend({}, options);
+        OpenLayers.Util.applyDefaults(options, this.options || {});
+        
         var bounds = null;
-        if (filter) {
+        if (options.filter) {
+            var filter = options.filter;
             if (filter instanceof OpenLayers.Filter.Spatial && 
                 filter.type == OpenLayers.Filter.Spatial.BBOX &&
                 filter.value instanceof OpenLayers.Bounds) {
@@ -165,7 +181,12 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
                 }
                 cursor.continue();
             } else {
-                callback.call(scope, features);
+                var response = new OpenLayers.Protocol.Response({
+                    code: OpenLayers.Protocol.Response.SUCCESS,
+                    requestType: "read",
+                    features: features
+                });
+                options.callback.call(options.scope, response);
                 console.log("Finished reading " + 
                             features.length + " features");
             }
@@ -174,7 +195,9 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
         req.onerror = function(evt) {
             console.error("readAllFeatures:", evt.target.errorCode);
         };
-    }
+    },
+    
+    CLASS_NAME: "OpenLayers.Protocol.IndexedDb" 
 
 });
 

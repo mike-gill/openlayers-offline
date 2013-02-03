@@ -1,4 +1,4 @@
-var map, wfs, untiled;
+var map, idbLayer, untiled;
 //OpenLayers.ProxyHost = "../proxy.cgi?url=";
 
 var DeleteFeature = OpenLayers.Class(OpenLayers.Control, {
@@ -31,7 +31,7 @@ var DeleteFeature = OpenLayers.Class(OpenLayers.Control, {
 function init() {
 
     var extent = new OpenLayers.Bounds(
-        400000, 100000, 420000, 120000
+        405000, 110000, 415000, 120000
     );
 
 
@@ -61,37 +61,17 @@ function init() {
 		   yx : {'EPSG:27700' : false}
 		} 
 	);
-
-    var saveStrategy = new OpenLayers.Strategy.Save();
+   
+   var protocol = new OpenLayers.Protocol.IndexedDb("TestDb9", 1, "TestFeatures");
+   var bboxStrategy = new OpenLayers.Strategy.BBOX({autoActivate: false})
+   var saveStrategy = new OpenLayers.Strategy.SaveIndexedDb();
+   var editLayerName = "Editable Features";
+   idbLayer = new OpenLayers.Layer.Vector(editLayerName, {
+        strategies: [bboxStrategy, saveStrategy],
+        protocol: protocol
+    });
     
-	/*
-    wfs = new OpenLayers.Layer.Vector("Editable Features", {
-        strategies: [new OpenLayers.Strategy.BBOX(), saveStrategy],
-        projection: new OpenLayers.Projection("EPSG:27700"),
-        protocol: new OpenLayers.Protocol.WFS({
-            version: "1.1.0",
-            srsName: "EPSG:27700",
-            url: "http://localhost:8090/geoserver/avas/wfs",
-            featureNS :  "http://www.geodigging.co.uk/avas",
-            featureType: "schedmon",
-            geometryName: "geom",
-            schema: "http://localhost:8090/geoserver/avas/wfs/DescribeFeatureType?version=1.1.0&typename=avas:schedmon"
-        })
-    }); 
-	*/
-
-	wfs = new OpenLayers.Layer.Vector("Editable Features", {
-        strategies: [new OpenLayers.Strategy.BBOX(), saveStrategy],
-        protocol: new OpenLayers.Protocol.WFS({
-            version: "1.1.0",
-            srsName: "EPSG:27700",
-            url: "http://localhost:8090/geoserver/wfs",
-			featurePrefix: "avas",
-            featureNS :  "http://www.geodigging.co.uk/avas",
-            featureType: "schedmon",
-            geometryName: "geom",
-        })
-    }); 
+    protocol.openDb(function(){bboxStrategy.activate();}, this);
 
 	var openspaceLayer = new OpenLayers.Layer.OsOpenSpace(
 		"OS OpenSpace Layer",
@@ -100,7 +80,7 @@ function init() {
 		{ isBaseLayer: true, opacity: 0.2 }
 	);
    
-    map.addLayers([openspaceLayer, untiled, wfs]);
+    map.addLayers([openspaceLayer, untiled, idbLayer]);
 
     var panel = new OpenLayers.Control.Panel({
         displayClass: 'customEditingToolbar',
@@ -108,7 +88,7 @@ function init() {
     });
     
     var draw = new OpenLayers.Control.DrawFeature(
-        wfs, OpenLayers.Handler.Polygon,
+        idbLayer, OpenLayers.Handler.Polygon,
         {
             title: "Draw Feature",
             displayClass: "olControlDrawFeaturePolygon",
@@ -116,12 +96,12 @@ function init() {
         }
     );
     
-    var edit = new OpenLayers.Control.ModifyFeature(wfs, {
+    var edit = new OpenLayers.Control.ModifyFeature(idbLayer, {
         title: "Modify Feature",
         displayClass: "olControlModifyFeature"
     });
 
-    var del = new DeleteFeature(wfs, {title: "Delete Feature"});
+    var del = new DeleteFeature(idbLayer, {title: "Delete Feature"});
    
     var save = new OpenLayers.Control.Button({
         title: "Save Changes",
@@ -133,8 +113,38 @@ function init() {
         },
         displayClass: "olControlSaveFeatures"
     });
+    
+    var checkOutBtn = new OpenLayers.Control.Button({
+        title: "Check out data for current extent",
+        trigger: clickReadWfst,
+        displayClass: "olControlSaveFeatures"
+    });
+    
+    function clickReadWfst() {
+        var bounds = map.getExtent();
+        var wfstOptions = {
+            version: "1.1.0",
+            srsName: "EPSG:27700",
+            url: "http://localhost:8090/geoserver/wfs",
+            featurePrefix: "avas",
+            featureNS :  "http://www.geodigging.co.uk/avas",
+            featureType: "schedmon",
+            geometryName: "geom",
+        }
+        var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, readWfstCallback, this);
+        wfstProxy.readFeatures(bounds);
+    }
+    
+    function readWfstCallback(features) {
+        var protocol = map.getLayersByName(editLayerName)[0].protocol;
+        protocol.commit(features, {callback: loadWfstCallback, scope: this});
+    }
+    
+    function loadWfstCallback(response) {
+        console.log("WFST records inserted, response code: " + response.code);
+    }
 
-    panel.addControls([save, del, edit, draw]);
+    panel.addControls([save, del, edit, draw, checkOutBtn]);
     map.addControl(panel);
     map.zoomToExtent(extent, true);
 }

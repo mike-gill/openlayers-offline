@@ -5,16 +5,17 @@
 <HEAD>
 
 <script type="text/javascript" src="lib/OpenLayers-2.12/lib/OpenLayers.js"></script>
-<script type="text/javascript" src="js/GeoStoreIndexedDb.js"></script>
+<script type="text/javascript" src="js/IndexedDb.js"></script>
 <script type="text/javascript" src="js/WfstProxy.js"></script>
 
 <script type="text/javascript">
-    var geoStore;
+    var idbProtocol;
     var format = new OpenLayers.Format.GeoJSON();
     var featureRead;
     
     function init() {
-        geoStore = new OpenLayers.GeoStoreIndexedDb("TestDb8", 1, "TestFeatures");
+        idbProtocol = new OpenLayers.Protocol.IndexedDb("TestDb8", 1, "TestFeatures");
+        idbProtocol.openDb();
     }
     
     function clickInsert() {
@@ -27,24 +28,26 @@
         var geom3 = OpenLayers.Geometry.fromWKT(
             "MULTIPOLYGON(((100 100, 100 101, 101 101, 101 100, 100 100)),((102 102, 102 103, 103 103, 103 102, 102 102)))");
         var feature3 = new OpenLayers.Feature.Vector(geom3, {fid: 46, label: "Label46"});
-        geoStore.putFeatures([feature1, feature2, feature3], putCallback, this);
+        idbProtocol.commit(
+            [feature1, feature2, feature3], 
+            {
+                callback: commitCallback, 
+                scope: this
+            }
+        );
     }
     
     function clickRead() {
-        geoStore.readFeature(parseInt(document.getElementById("recid").value), readCallback, this);
+        idbProtocol.readFeature(parseInt(document.getElementById("recid").value), readCallback, this);
     }
     
     function clickUpdate() {
         featureRead.attributes.label = document.getElementById("labelInput").value;
-        geoStore.putFeatures(
-            [featureRead], 
-            updateCallback, 
-            this
-        );
+        idbProtocol.commit([featureRead], {callback: updateCallback, scope: this});
     }
     
     function clickReadAll() {
-        geoStore.readFeatures(displayFeatures, this);
+        idbProtocol.read({callback: displayFeatures, scope: this});
     }
     
     function clickReadWithBounds() {
@@ -52,7 +55,7 @@
             type: OpenLayers.Filter.Spatial.BBOX,
             value: new OpenLayers.Bounds(12, 12, 101, 101)
         });
-        geoStore.readFeatures(displayFeatures, this, filter);
+        idbProtocol.read({filter: filter, callback: displayFeatures, scope: this});
     }
     
     function clickReadWfst() {
@@ -73,7 +76,7 @@
     function readCallback(feature) {
         console.log(feature.geometry.getArea());
         featureRead = feature;
-        displayFeatures([feature]);
+        displayFeatures({features: [feature]});
     }
     
     function updateCallback() {
@@ -81,10 +84,11 @@
     }
     
     function readWfstCallback(features) {
-        geoStore.putFeatures(features, putCallback, this);
+        idbProtocol.commit(features, {callback: commitCallback, scope: this});
     }
     
-    function displayFeatures(features) {
+    function displayFeatures(response) {
+        var features = response.features;
         var textArea = document.getElementById("featureTextArea");
         textArea.value = "";
         for (var i = 0; i < features.length; i++) {
@@ -104,8 +108,8 @@
         textArea.value = text;
     }
     
-    function putCallback() {
-        console.log("All inserted");
+    function commitCallback(response) {
+        console.log("All inserted, response code: " + response.code);
     }
     
 
