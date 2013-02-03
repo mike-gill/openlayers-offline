@@ -7,7 +7,7 @@ window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || 
 window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
 if (!window.indexedDB) {
-    window.alert("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
+    window.alert("Your browser doesn't support a stable version of IndexedDB.");
 }
 
 OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
@@ -32,6 +32,7 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
         var dbStoreName = this.dbStoreName;
         console.log("openDb ...");
         var req = indexedDB.open(this.dbName, this.dbVersion);
+        
         req.onsuccess = function(evt) {
             // Better use "this" than "req" to get the result to avoid problems with
             // garbage collection.
@@ -39,15 +40,17 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
             db.db = req.result;
             console.log("openDb DONE");
         };
+        
         req.onerror = function(evt) {
             console.error("openDb:", evt.target.errorCode);
         };
+        
         req.onupgradeneeded = function(evt) {
             console.log("openDb.onupgradeneeded");
             console.log("this.dbStoreName: " + this.dbStoreName);
             console.log("dbStoreName: " + dbStoreName);
             var store = evt.currentTarget.result.createObjectStore(dbStoreName, {
-                keyPath : 'id',
+                keyPath : 'key',
                 autoIncrement : true
             });
             //store.createIndex('field1', 'field1', { unique: true });
@@ -66,9 +69,11 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
     clearObjectStore: function (store_name) {
         var store = this.getObjectStore(DB_STORE_NAME, IDBTransaction.READ_WRITE);
         var req = store.clear();
+        
         req.onsuccess = function(evt) {
             console.log("Store cleared");
         };
+        
         req.onerror = function(evt) {
             console.error("clearObjectStore:", evt.target.errorCode);
         };
@@ -77,7 +82,13 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
     
     _putFeature: function(store, features, index, callback, scope) {
         var thisObj = this;
-        var req = store.put(JSON.parse(this.format.write(features[index])));
+        var feature = features[index];
+        var geoJsonObj = JSON.parse(this.format.write(feature));
+        if (feature.key) {
+            geoJsonObj.key = feature.key
+        }
+        var req = store.put(geoJsonObj);
+        
         req.onsuccess = function(event) {
             console.log("Key: " + event.target.result);
             features[index].key = event.target.result;
@@ -89,6 +100,7 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
                 callback.call(scope);
             }
         };
+        
         req.onerror = function(evt) {
             console.error("_putFeature:", evt.target.errorCode);
         };
@@ -103,12 +115,14 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
         var format = this.format;
         var store = this.getObjectStore(IDBTransaction.READ_ONLY);
         var req = store.get(key);
+        
         req.onsuccess = function(event) {
             if (event.target.result == null) {
                 console.log("Feature not found");
             } else {
                 console.log(JSON.stringify(event.target.result));
                 var feature = format.parseFeature(event.target.result);
+                feature.key = event.target.result.key;
                 console.log("Label: " + feature.attributes.label);
                 console.log("Area: " + feature.geometry.getArea());
             }
@@ -136,10 +150,12 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
         var format = this.format;
         var store = this.getObjectStore(IDBTransaction.READ_ONLY);
         var req = store.openCursor();
+        
         req.onsuccess = function(event) {
             var cursor = event.target.result;
             if (cursor) {
                 var feature = format.parseFeature(cursor.value);
+                feature.key = cursor.value.key;
                 if (bounds) {
                     if (bounds.intersectsBounds(feature.geometry.getBounds())) {
                         features.push(feature);
@@ -147,7 +163,6 @@ OpenLayers.GeoStoreIndexedDb = OpenLayers.Class(
                 } else {
                     features.push(feature);
                 }
-
                 cursor.continue();
             } else {
                 callback.call(scope, features);
