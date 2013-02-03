@@ -6,6 +6,7 @@
 
 <script type="text/javascript" src="lib/OpenLayers-2.12/lib/OpenLayers.js"></script>
 <script type="text/javascript" src="js/GeoStoreIndexedDb.js"></script>
+<script type="text/javascript" src="js/WfstProxy.js"></script>
 
 <script type="text/javascript">
     var geoStore;
@@ -54,6 +55,21 @@
         geoStore.readFeatures(displayFeatures, this, filter);
     }
     
+    function clickReadWfst() {
+        var bounds = new OpenLayers.Bounds(408500, 119500, 409500, 120500);
+        var wfstOptions = {
+            version: "1.1.0",
+            srsName: "EPSG:27700",
+            url: "http://localhost:8090/geoserver/wfs",
+            featurePrefix: "avas",
+            featureNS :  "http://www.geodigging.co.uk/avas",
+            featureType: "schedmon",
+            geometryName: "geom",
+        }
+        var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, readWfstCallback, this);
+        wfstProxy.readFeatures(bounds);
+    }
+    
     function readCallback(feature) {
         console.log(feature.geometry.getArea());
         featureRead = feature;
@@ -62,6 +78,10 @@
     
     function updateCallback() {
         displayText("Feature Updated");
+    }
+    
+    function readWfstCallback(features) {
+        geoStore.putFeatures(features, putCallback, this);
     }
     
     function displayFeatures(features) {
@@ -98,6 +118,7 @@
     New Label: <input id="labelInput" type="text" value="New Label"/><input type="button" onclick="javascript:clickUpdate();" value="Update" /><br/>
     <input type="button" onclick="javascript:clickReadWithBounds();" value="ReadWithBounds" /> 
     <input type="button" onclick="javascript:clickReadAll();" value="ReadAll"/>
+    <input type="button" onclick="javascript:clickReadWfst();" value="Read WFST"/>
     <br/>
     <br/>
     <textarea id="featureTextArea" rows="30" cols="100">Features will be displayed here</textarea>
