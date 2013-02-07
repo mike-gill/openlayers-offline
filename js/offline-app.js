@@ -33,13 +33,18 @@ function init() {
     var extent = new OpenLayers.Bounds(
         405000, 110000, 415000, 120000
     );
+    
+    var maxExtent = new OpenLayers.Bounds(
+        0,0,700000,1300000
+    );
 
 
     map = new OpenLayers.Map('map', {
         projection: new OpenLayers.Projection("EPSG:27700"),
 		units: 'm',
         displayProjection: new OpenLayers.Projection("EPSG:27700"),
-        maxExtent: extent,
+        extent: extent,
+        maxExtent: maxExtent,
         controls: [
             new OpenLayers.Control.PanZoom(),
             new OpenLayers.Control.Navigation()
@@ -47,9 +52,9 @@ function init() {
     });
     // setup single tiled layer
 	untiled = new OpenLayers.Layer.WMS(
-		"avas:schedmon - Untiled", "http://localhost:8090/geoserver/avas/wms",
+		"Job polygons WMS", "http://osvm275:9090/geoserver/cite/wms",
 		{
-			LAYERS: 'avas:schedmon',
+			LAYERS: 'cite:region_co_polys',
 			STYLES: '',
 			format: 'image/png',
 			transparent: true
@@ -62,8 +67,8 @@ function init() {
 		} 
 	);
    
-   var protocol = new OpenLayers.Protocol.IndexedDb("TestDb9", 1, "TestFeatures");
-   var bboxStrategy = new OpenLayers.Strategy.BBOX({autoActivate: false})
+   var protocol = new OpenLayers.Protocol.IndexedDb("TestDb12", 1, "TestFeatures");
+   var bboxStrategy = new OpenLayers.Strategy.BBOX({autoActivate: false});
    var saveStrategy = new OpenLayers.Strategy.SaveIndexedDb();
    var editLayerName = "Editable Features";
    idbLayer = new OpenLayers.Layer.Vector(editLayerName, {
@@ -119,21 +124,37 @@ function init() {
         trigger: clickReadWfst,
         displayClass: "olControlSaveFeatures"
     });
+/* 
+    function clickReadWfst() {
+        var bounds = map.getExtent();
+        var wfstOptions = {
+            version: "1.1.0",
+            srsName: "EPSG:27700",
+            url: "http://osvm275:9090/geoserver/wfs",
+            featureNS :  "http://www.opengeospatial.net/cite",
+            featureType: "cite:region_co_polys",
+            geometryName: "geom",
+        };
+        var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, readWfstCallback, this);
+        wfstProxy.readFeatures(bounds);
+    }
+*/    
     
     function clickReadWfst() {
         var bounds = map.getExtent();
         var wfstOptions = {
             version: "1.1.0",
             srsName: "EPSG:27700",
-            url: "http://localhost:8090/geoserver/wfs",
-            featurePrefix: "avas",
-            featureNS :  "http://www.geodigging.co.uk/avas",
-            featureType: "schedmon",
+            url: "http://osvm275:9090/geoserver/wfs",
+            featurePrefix: "cite",
+            featureNS :  "http://www.opengeospatial.net/cite",
+            featureType: "region_co_polys",
             geometryName: "geom",
-        }
+        };
         var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, readWfstCallback, this);
         wfstProxy.readFeatures(bounds);
     }
+    
     
     function readWfstCallback(features) {
         var protocol = map.getLayersByName(editLayerName)[0].protocol;
