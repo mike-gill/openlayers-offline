@@ -128,10 +128,9 @@
             
                 <li><a id="toggleTileCacheBtn" class="btn" href="#"><i class="icon-download-alt"></i>Cache On</a></li>
                 <li><a id="clearTileCacheBtn" class="btn" href="#"><i class="icon-trash"></i>Clear cache</a></li>
-                <li><a id="clearFeatureCacheBtn" class="btn" href="#"><i class="icon-retweet"></i>Clear features DB</a></li>
+                <li><a id="checkoutFeatures" class="btn" href="#"><i class="icon-edit"></i>Checkout current extent</a></li>
+                <li><a id="checkinFeatures" class="btn" href="#"><i class="icon-share"></i>Checkin current extent</a></li>
                 <li><span id="connectivityStatus" class="label label-success">Online</span></li>
-                <li id="cacheStatus">Status: </li>
-                <li id="cacheHits">Hits: </li>
 			
 			</div>
 		</div>
@@ -198,10 +197,18 @@ $("#clearTileCacheBtn").click(function() {
     window.updateCacheStatus();
 });
 
-/* Clears the feature db */
-$("#clearFeatureCacheBtn").click(function() {
-    console.log("clearFeatureCacheBtn");
-    clearFeatureDb();
+/* Checkout current extent */
+$("#checkoutFeatures").click(function() {
+    console.log("checkoutFeatures");
+    //$("#checkoutFeatures").addClass('btn-primary');
+    clickReadWfst();
+});
+
+/* Checkin current extent */
+$("#checkinFeatures").click(function() {
+    console.log("checkinFeatures");
+    //$("#checkoutFeatures").removeClass('btn-primary');
+    clickWriteWfst();
 });
 
 $("#test").click(function() {
@@ -230,16 +237,7 @@ window.onoffline = function () {
 
 /* Updates backdrop mapping tile caching status */
 window.updateCacheStatus = function(evt) {
-            //console.log("updateStatus")
-            if (window.localStorage) {
-                $("#cacheStatus").text(localStorage.length + " entries in cache.");
-            } else {
-                $("#cacheStatus").text("Local storage not supported. Try a different browser.");
-            }
-            if (evt && evt.tile.url.substr(0, 5) === "data:") {
-                cacheHits++;
-            }
-    $("#cacheHits").text( cacheHits + " cache hits." );
+    //console.log("updateStatus")
 }
 
 /* Shows the modal for the attribute editor */

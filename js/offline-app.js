@@ -131,17 +131,6 @@ function init() {
         displayClass: "olControlSaveFeatures"
     });
     
-    var checkOutBtn = new OpenLayers.Control.Button({
-        title: "Check out data for current extent",
-        trigger: clickReadWfst,
-        displayClass: "olControlSaveFeatures"
-    });
-    
-    var checkInBtn = new OpenLayers.Control.Button({
-        title: "Check in data for current extent",
-        trigger: clickWriteWfst,
-        displayClass: "olControlSaveFeatures"
-    });
 /* 
     function clickReadWfst() {
         var bounds = map.getExtent();
@@ -168,7 +157,7 @@ function init() {
         };
     var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, readWfstCallback, this, writeWfstCallback, this);
         
-    function clickReadWfst() {
+    window.clickReadWfst = function() {
         var bounds = map.getExtent();
         wfstProxy.readFeatures(bounds);
     }
@@ -180,7 +169,7 @@ function init() {
 
     }
     
-    function clickWriteWfst() {
+    window.clickWriteWfst = function() {
         //var bounds = map.getExtent();
         /*
         var wfstOptions = {
@@ -256,7 +245,7 @@ function init() {
     map.addControl(cacheWrite);
     /* cache end */
 
-    panel.addControls([save, del, edit, draw, checkOutBtn, checkInBtn]);
+    panel.addControls([save, del, edit, draw]);
     map.addControl(panel);
     map.zoomToExtent(extent, true);
 }
