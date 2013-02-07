@@ -69,11 +69,12 @@ OpenLayers.Protocol.IndexedDb = OpenLayers.Class(OpenLayers.Protocol, {
         return tx.objectStore(this.dbStoreName);
     },
 
-    clearObjectStore: function (store_name) {
-        var store = this.getObjectStore(DB_STORE_NAME, IDBTransaction.READ_WRITE);
+    clearObjectStore: function (options) {
+    	var store = this.getObjectStore(IDBTransaction.READ_WRITE);
         var req = store.clear();
         
         req.onsuccess = function(evt) {
+        	options.callback.call(options.scope);
             console.log("Store cleared");
         };
         
@@ -88,7 +89,10 @@ OpenLayers.Protocol.IndexedDb = OpenLayers.Class(OpenLayers.Protocol, {
         var feature = features[index];
         var geoJsonObj = JSON.parse(this.format.write(feature));
         if (feature.key) {
-            geoJsonObj.key = feature.key
+            geoJsonObj.key = feature.key;
+        }
+        if (feature.state) {
+        	geoJsonObj.state = feature.state;
         }
         var req = store.put(geoJsonObj);
         
@@ -97,7 +101,6 @@ OpenLayers.Protocol.IndexedDb = OpenLayers.Class(OpenLayers.Protocol, {
             // TODO - look at case where transaction could be rolled back,
             // and impact on the following.
             features[index].key = event.target.result;
-            features[index].state = null;
             console.log("FeatureKey: " + features[index].key);
             index++;
             if (index < features.length) {
@@ -135,6 +138,7 @@ OpenLayers.Protocol.IndexedDb = OpenLayers.Class(OpenLayers.Protocol, {
                 console.log(JSON.stringify(event.target.result));
                 feature = format.parseFeature(event.target.result);
                 feature.key = event.target.result.key;
+                feature.state = event.target.result.state;
                 console.log("Label: " + feature.attributes.label);
                 console.log("Area: " + feature.geometry.getArea());
             }

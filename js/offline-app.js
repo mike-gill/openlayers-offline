@@ -1,4 +1,5 @@
 var map, idbLayer, untiled;
+var wfstProxy;
 OpenLayers.ProxyHost = "/cgi-bin/proxy.cgi?url=";
 
 var DeleteFeature = OpenLayers.Class(OpenLayers.Control, {
@@ -67,7 +68,7 @@ function init() {
 		} 
 	);
    
-   var protocol = new OpenLayers.Protocol.IndexedDb("TestDb12", 1, "TestFeatures");
+   var protocol = new OpenLayers.Protocol.IndexedDb("TestDb17", 1, "TestFeatures");
    var bboxStrategy = new OpenLayers.Strategy.BBOX({autoActivate: false});
    var saveStrategy = new OpenLayers.Strategy.SaveIndexedDb();
    var editLayerName = "Editable Features";
@@ -124,6 +125,12 @@ function init() {
         trigger: clickReadWfst,
         displayClass: "olControlSaveFeatures"
     });
+    
+    var checkInBtn = new OpenLayers.Control.Button({
+        title: "Check in data for current extent",
+        trigger: clickWriteWfst,
+        displayClass: "olControlSaveFeatures"
+    });
 /* 
     function clickReadWfst() {
         var bounds = map.getExtent();
@@ -139,10 +146,7 @@ function init() {
         wfstProxy.readFeatures(bounds);
     }
 */    
-    
-    function clickReadWfst() {
-        var bounds = map.getExtent();
-        var wfstOptions = {
+    wfstOptions = {
             version: "1.1.0",
             srsName: "EPSG:27700",
             url: "http://osvm275:9090/geoserver/wfs",
@@ -151,7 +155,10 @@ function init() {
             featureType: "region_co_polys",
             geometryName: "geom",
         };
-        var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, readWfstCallback, this);
+    var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, readWfstCallback, this, writeWfstCallback, this);
+        
+    function clickReadWfst() {
+        var bounds = map.getExtent();
         wfstProxy.readFeatures(bounds);
     }
     
@@ -162,9 +169,43 @@ function init() {
 
     }
     
+    function clickWriteWfst() {
+        //var bounds = map.getExtent();
+        /*
+        var wfstOptions = {
+            version: "1.1.0",
+            srsName: "EPSG:27700",
+            url: "http://osvm275:9090/geoserver/wfs",
+            featurePrefix: "cite",
+            featureNS :  "http://www.opengeospatial.net/cite",
+            featureType: "region_co_polys",
+            geometryName: "geom",
+        };
+        var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, writeWfstCallback, this);
+        */
+        wfstProxy.writeFeatures(idbLayer.features);
+    }
+    
+    
+    function writeWfstCallback(features) {
+        var protocol = map.getLayersByName(editLayerName)[0].protocol;
+        protocol.clearObjectStore({callback: clearIdbCallback, scope: this});
+
+    }
+    
     function loadWfstCallback(response) {
         console.log("WFST records inserted, response code: " + response.code);
-        for(var i = 0; i < idbLayer.strategies.length; i++) {
+        forceRefreshIdbLayer();
+    }
+    
+    function clearIdbCallback() {
+    	console.log("Local cache saved and cleared");
+    	untiled.redraw(true);
+    	forceRefreshIdbLayer();
+    }
+    
+    function forceRefreshIdbLayer() {
+    	for(var i = 0; i < idbLayer.strategies.length; i++) {
         	var strategy = idbLayer.strategies[i];
             if (strategy instanceof OpenLayers.Strategy.BBOX) {
             	strategy.update({force: true});
@@ -173,7 +214,7 @@ function init() {
         }
     }
 
-    panel.addControls([save, del, edit, draw, checkOutBtn]);
+    panel.addControls([save, del, edit, draw, checkOutBtn, checkInBtn]);
     map.addControl(panel);
     map.zoomToExtent(extent, true);
 }
