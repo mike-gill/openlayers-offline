@@ -22,7 +22,7 @@
 	
     <style>
 		body {
-			padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+			padding-top: 96px;
 		}
 		
 		#toolset{
@@ -114,12 +114,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="#">Feature editing</a>
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li class="active"><a href="offline-app.html">App</a></li>
-            </ul>
-          </div><!--/.nav-collapse -->
+          <a class="brand" href="#"><img src="img/logo-disconnected.png"></a>
         </div>
       </div>
     </div>
@@ -131,10 +126,10 @@
             
             <ul class="inline">
             
-                <li><a id="toggleTileCacheBtn" class="btn" href="#"><i class="icon-download-alt"></i>Cache Off</a></li>
+                <li><a id="toggleTileCacheBtn" class="btn" href="#"><i class="icon-download-alt"></i>Cache On</a></li>
                 <li><a id="clearTileCacheBtn" class="btn" href="#"><i class="icon-trash"></i>Clear cache</a></li>
                 <li><a id="clearFeatureCacheBtn" class="btn" href="#"><i class="icon-retweet"></i>Clear features DB</a></li>
-                <li><a id="test" class="btn" href="#">Open attr modal</a></li>
+                <li><span id="connectivityStatus" class="label label-success">Online</span></li>
                 <li id="cacheStatus">Status: </li>
                 <li id="cacheHits">Hits: </li>
 			
@@ -183,11 +178,12 @@
 
     //"use strict"; //enable strict mode for whole block
     
+/* Toggles backdrop mapping tile caching */    
 $("#toggleTileCacheBtn").click(function() {
     
     console.log("toggleTileCacheBtn");
     $("#toggleTileCacheBtn").toggleClass('btn-primary');
-    $(this).text($(this).text() === 'Cache Off' ? 'Cache On' : 'Cache Off').prepend('<i class="icon-download-alt"></i>');
+    $(this).text($(this).text() === 'Cache On' ? 'Cache Off' : 'Cache On').prepend('<i class="icon-download-alt"></i>');
     if(window.cacheWrite.active === true){
         window.cacheWrite.deactivate();
     }else{
@@ -195,21 +191,45 @@ $("#toggleTileCacheBtn").click(function() {
     }
 });
 
+/* Clears backdrop mapping tile caching */
 $("#clearTileCacheBtn").click(function() {
     console.log("clearTileCacheBtn");
     OpenLayers.Control.CacheWrite.clearCache();
-    window.updateStatus();
+    window.updateCacheStatus();
 });
 
+/* Clears the feature db */
 $("#clearFeatureCacheBtn").click(function() {
     console.log("clearFeatureCacheBtn");
+    clearFeatureDb();
 });
 
 $("#test").click(function() {
     showInfo(null);
 });
 
-window.updateStatus = function(evt) {
+
+window.ononline = function () {
+
+   map.addLayer(untiled);
+   map.raiseLayer(idbLayer, 99);
+  $("#connectivityStatus").text('Online');
+  $("#connectivityStatus").removeClass('label-important');
+  $("#connectivityStatus").addClass('label-success');
+};
+
+window.onoffline = function () {
+
+  map.removeLayer(untiled);
+
+  $("#connectivityStatus").text('Offline');
+  $("#connectivityStatus").removeClass('label-success');
+  $("#connectivityStatus").addClass('label-important');
+};
+
+
+/* Updates backdrop mapping tile caching status */
+window.updateCacheStatus = function(evt) {
             //console.log("updateStatus")
             if (window.localStorage) {
                 $("#cacheStatus").text(localStorage.length + " entries in cache.");
@@ -219,9 +239,10 @@ window.updateStatus = function(evt) {
             if (evt && evt.tile.url.substr(0, 5) === "data:") {
                 cacheHits++;
             }
-            $("#cacheHits").text( cacheHits + " cache hits." );
-        }
+    $("#cacheHits").text( cacheHits + " cache hits." );
+}
 
+/* Shows the modal for the attribute editor */
 window.showInfo = function(evt) {
     
     console.log(evt);
