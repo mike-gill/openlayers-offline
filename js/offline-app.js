@@ -1,5 +1,8 @@
-var map, idbLayer, untiled;
+var map, idbLayer, untiled, cacheWrite;
 var wfstProxy;
+var cacheHits = 0;
+var seeding = false;
+
 OpenLayers.ProxyHost = "/cgi-bin/proxy.cgi?url=";
 
 var DeleteFeature = OpenLayers.Class(OpenLayers.Control, {
@@ -32,7 +35,7 @@ var DeleteFeature = OpenLayers.Class(OpenLayers.Control, {
 function init() {
 
     var extent = new OpenLayers.Bounds(
-        405000, 110000, 415000, 120000
+        506000, 122000, 516000, 132000
     );
     
     var maxExtent = new OpenLayers.Bounds(
@@ -55,7 +58,7 @@ function init() {
 	untiled = new OpenLayers.Layer.WMS(
 		"Job polygons WMS", "http://osvm275:9090/geoserver/cite/wms",
 		{
-			LAYERS: 'cite:region_co_polys',
+			LAYERS: 'cite:polygons_geo',
 			STYLES: '',
 			format: 'image/png',
 			transparent: true
@@ -83,9 +86,12 @@ function init() {
 		"OS OpenSpace Layer",
 		"http://openspace.ordnancesurvey.co.uk/osmapapi/ts",
 		{ key: "CC19DCDCAA577402E0405F0ACA603788" },
-		{ isBaseLayer: true, opacity: 0.2 }
+		{ isBaseLayer: true, opacity: 0.2, eventListeners: {
+                    tileloaded: updateStatus
+                } 
+            }
 	);
-   
+    
     map.addLayers([openspaceLayer, untiled, idbLayer]);
 
     var panel = new OpenLayers.Control.Panel({
@@ -139,7 +145,7 @@ function init() {
             srsName: "EPSG:27700",
             url: "http://osvm275:9090/geoserver/wfs",
             featureNS :  "http://www.opengeospatial.net/cite",
-            featureType: "cite:region_co_polys",
+            featureType: "cite:polygons_geo",
             geometryName: "geom",
         };
         var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, readWfstCallback, this);
@@ -152,8 +158,8 @@ function init() {
             url: "http://osvm275:9090/geoserver/wfs",
             featurePrefix: "cite",
             featureNS :  "http://www.opengeospatial.net/cite",
-            featureType: "region_co_polys",
-            geometryName: "geom",
+            featureType: "polygons_geo",
+            geometryName: "wkb_geometry",
         };
     var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, readWfstCallback, this, writeWfstCallback, this);
         
@@ -178,7 +184,7 @@ function init() {
             url: "http://osvm275:9090/geoserver/wfs",
             featurePrefix: "cite",
             featureNS :  "http://www.opengeospatial.net/cite",
-            featureType: "region_co_polys",
+            featureType: "polygons_geo",
             geometryName: "geom",
         };
         var wfstProxy = new OpenLayers.WfstProxy(wfstOptions, writeWfstCallback, this);
@@ -213,6 +219,43 @@ function init() {
             }
         }
     }
+    
+    // try cache before loading from remote resource
+    var cacheRead1 = new OpenLayers.Control.CacheRead({
+        eventListeners: {
+            activate: function() {
+                console.log("cacheRead1 active");
+            }
+        }
+    });
+        
+    cacheWrite = new OpenLayers.Control.CacheWrite({
+        imageFormat: "image/png",
+        eventListeners: {
+            cachefull: function() {
+                console.log("Cache full.");
+                if (!window.localStorage) { return; }
+                var i, key;
+                for (i=0; i < 10; i++) {
+                    key = window.localStorage.key(i);
+                    if (key.substr(0, 8) === "olCache_") {
+                        window.localStorage.removeItem(key);
+                    }
+                }
+                updateStatus();
+            },
+            activate: function() {
+                console.log("cacheWrite active");
+            },
+            deactivate: function() {
+                console.log("cacheWrite inactive");
+            }
+        }
+    });
+        
+    map.addControl(cacheRead1);
+    map.addControl(cacheWrite);
+    /* cache end */
 
     panel.addControls([save, del, edit, draw, checkOutBtn, checkInBtn]);
     map.addControl(panel);

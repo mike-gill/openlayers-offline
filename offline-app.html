@@ -26,7 +26,7 @@
 		}
 		
 		#toolset{
-            height: 100px;
+            height: 60px;
             border: 1px solid black;
             display: block;
 		}
@@ -131,9 +131,12 @@
             
             <ul class="inline">
             
-                <li><a id="toggleTileCacheBtn" class="btn" href="#"><i class="icon-download-alt"></i>Turn cache on</a></li>
+                <li><a id="toggleTileCacheBtn" class="btn" href="#"><i class="icon-download-alt"></i>Cache Off</a></li>
                 <li><a id="clearTileCacheBtn" class="btn" href="#"><i class="icon-trash"></i>Clear cache</a></li>
-                <li><a id="clearFeatureCacheBtn" class="btn" href="#"><i class="icon-retweet"></i>Clear features</a></li>
+                <li><a id="clearFeatureCacheBtn" class="btn" href="#"><i class="icon-retweet"></i>Clear features DB</a></li>
+                <li><a id="test" class="btn" href="#">Open attr modal</a></li>
+                <li id="cacheStatus">Status: </li>
+                <li id="cacheHits">Hits: </li>
 			
 			</div>
 		</div>
@@ -147,7 +150,25 @@
 		</div>
 	  
     </div> <!-- /container -->
+    
+     
+    <!-- Modal -->
+    <div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Feature Edit</h3>
+    </div>
+    <div class="modal-body">
+    <p>Attrs here...</p>
+    </div>
+    <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+    <button id="saveFeatureAttrs" class="btn btn-primary">Save changes</button>
+    </div>
+    </div>
+    <!-- /Modal -->
 	
+    <script type="text/javascript" src="js/jquery.js"></script>
 	<script type="text/javascript" src="lib/OpenLayers-2.12/lib/OpenLayers.js"></script>
     <script type="text/javascript" src="js/IndexedDb.js"></script>
     <script type="text/javascript" src="js/SaveIndexedDb.js"></script>
@@ -161,27 +182,62 @@
 (function() {
 
     //"use strict"; //enable strict mode for whole block
+    
+$("#toggleTileCacheBtn").click(function() {
+    
+    console.log("toggleTileCacheBtn");
+    $("#toggleTileCacheBtn").toggleClass('btn-primary');
+    $(this).text($(this).text() === 'Cache Off' ? 'Cache On' : 'Cache Off').prepend('<i class="icon-download-alt"></i>');
+    if(window.cacheWrite.active === true){
+        window.cacheWrite.deactivate();
+    }else{
+        window.cacheWrite.activate();
+    }
+});
 
-    document.getElementById("toggleTileCacheBtn").onclick=function(){
-    
-        console.log("toggleTileCacheBtn");
-    }
-    
-    document.getElementById("clearTileCacheBtn").onclick=function(){
-        console.log("clearTileCacheBtn");
-    }
-    
-    document.getElementById("clearFeatureCacheBtn").onclick=function(){
-        console.log("clearFeatureCacheBtn");
-    }
+$("#clearTileCacheBtn").click(function() {
+    console.log("clearTileCacheBtn");
+    OpenLayers.Control.CacheWrite.clearCache();
+    window.updateStatus();
+});
 
-    window.onload = init;
+$("#clearFeatureCacheBtn").click(function() {
+    console.log("clearFeatureCacheBtn");
+});
+
+$("#test").click(function() {
+    showInfo(null);
+});
+
+window.updateStatus = function(evt) {
+            //console.log("updateStatus")
+            if (window.localStorage) {
+                $("#cacheStatus").text(localStorage.length + " entries in cache.");
+            } else {
+                $("#cacheStatus").text("Local storage not supported. Try a different browser.");
+            }
+            if (evt && evt.tile.url.substr(0, 5) === "data:") {
+                cacheHits++;
+            }
+            $("#cacheHits").text( cacheHits + " cache hits." );
+        }
+
+window.showInfo = function(evt) {
     
+    console.log(evt);
+    $('#myModal').modal('show');
+}
     
+
+$(document).ready(function() {
+    init();
+});
 
 
 } ());
     </script>
+    
+    </body>
 	
 </html>
 
