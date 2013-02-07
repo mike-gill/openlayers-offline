@@ -200,12 +200,14 @@ $("#clearTileCacheBtn").click(function() {
 /* Checkout current extent */
 $("#checkoutFeatures").click(function() {
     console.log("checkoutFeatures");
+    //$("#checkoutFeatures").addClass('btn-primary');
     clickReadWfst();
 });
 
 /* Checkin current extent */
 $("#checkinFeatures").click(function() {
     console.log("checkinFeatures");
+    //$("#checkoutFeatures").removeClass('btn-primary');
     clickWriteWfst();
 });
 
