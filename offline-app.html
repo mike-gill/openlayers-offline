@@ -134,7 +134,7 @@
                 <li><a id="toggleTileCacheBtn" class="btn" href="#"><i class="icon-download-alt"></i>Cache Off</a></li>
                 <li><a id="clearTileCacheBtn" class="btn" href="#"><i class="icon-trash"></i>Clear cache</a></li>
                 <li><a id="clearFeatureCacheBtn" class="btn" href="#"><i class="icon-retweet"></i>Clear features DB</a></li>
-                <li><a href="#myModal" role="button" class="btn" data-toggle="modal">Launch demo modal</a></li>
+                <li><a id="test" class="btn" href="#">Open attr modal</a></li>
 			
 			</div>
 		</div>
@@ -157,11 +157,11 @@
     <h3 id="myModalLabel">Feature Edit</h3>
     </div>
     <div class="modal-body">
-    <p>One fine body…</p>
+    <p>Attrs here...</p>
     </div>
     <div class="modal-footer">
     <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-    <button class="btn btn-primary">Save changes</button>
+    <button id="saveFeatureAttrs" class="btn btn-primary">Save changes</button>
     </div>
     </div>
     <!-- /Modal -->
@@ -197,10 +197,14 @@ $("#clearFeatureCacheBtn").click(function() {
     console.log("clearFeatureCacheBtn");
 });
 
+$("#test").click(function() {
+    showInfo(null);
+});
+
 window.showInfo = function(evt) {
     
     console.log(evt);
-    
+    $('#myModal').modal('show');
 }
     
 
