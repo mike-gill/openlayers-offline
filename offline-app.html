@@ -1,17 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <meta name="apple-mobile-web-app-capable" content="yes">
+	
+	<link rel="stylesheet" href="bootstrap.css" type="text/css">
     <link rel="stylesheet" href="lib/OpenLayers-2.12/theme/default/style.css" type="text/css">
-    <link rel="stylesheet" href="style.css" type="text/css">
-    <script type="text/javascript" src="lib/OpenLayers-2.12/lib/OpenLayers.js"></script>
-    <script type="text/javascript" src="js/IndexedDb.js"></script>
-    <script type="text/javascript" src="js/SaveIndexedDb.js"></script>
-    <script type="text/javascript" src="js/WfstProxy.js"></script>
-    <script type="text/javascript" src="js/OsOpenSpace.js"></script>
-    <script type="text/javascript" src="js/offline-app.js"></script>
+    
+	
+	<title>Offline editing - Hackday</title>
     
     <!--[if lte IE 6]>
         <style>
@@ -20,7 +18,36 @@
             }
         </style>
     <![endif]-->   
+
+	
     <style>
+		body {
+			padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+		}
+		
+		#toolset{
+            height: 100px;
+            border: 1px solid black;
+            display: block;
+		}
+        
+        #toolset li{
+            margin:10px;
+        }
+        
+        #map{
+            height: 500px;
+            border: 1px solid black;
+        }
+        
+        #map-container{
+            margin-top: 10px;
+        }
+        
+        #map img{
+            max-width: none;
+        }
+	
         .customEditingToolbar {
             float: right;
             right: 0px;
@@ -75,35 +102,87 @@
     </style>
 
     </head>
-    <body onload="init()">
-        <h1 id="title">WFS Transaction Example</h1>
-        <div id="tags">
-            wfs, wfst, wfs-t, advanced
+    
+	
+	<body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="#">Feature editing</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li class="active"><a href="offline-app.html">App</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
         </div>
-        <p id="shortdesc">
-            Shows the use of the WFS Transactions (WFS-T).
-        </p>
-        <div id="map" class="smallmap"></div>
-        <div id="docs">
-            <p>
-                The WFS protocol allows for creation of new features and
-                reading, updating, or deleting of existing features.
-            </p>
-            <p>
-                Use the tools to create, modify, and delete (in order from left
-                to right) features. Use the save tool (picture of a disk) to
-                save your changes.
-            </p>
-            <p>
-                To deactivate "drawing" or "modifying" depress the
-                corresponding button.
-            </p>
-            <p>
-                See the <a href="wfs-protocol-transactions.js" target="_blank">
-                wfs-protocol-transactions.js source</a> to see how this is done.
-            </p>        
-        </div>
-    </body>
+      </div>
+    </div>
+
+    <div class="container">
+      
+	    <div class="row">
+			<div id="toolset" class="span12">
+            
+            <ul class="inline">
+            
+                <li><a id="toggleTileCacheBtn" class="btn" href="#"><i class="icon-download-alt"></i>Turn cache on</a></li>
+                <li><a id="clearTileCacheBtn" class="btn" href="#"><i class="icon-trash"></i>Clear cache</a></li>
+                <li><a id="clearFeatureCacheBtn" class="btn" href="#"><i class="icon-retweet"></i>Clear features</a></li>
+			
+			</div>
+		</div>
+		
+		<div id="map-container" class="row">
+			<div class="span12">
+			
+				<div id="map"></div>
+			
+			</div>
+		</div>
+	  
+    </div> <!-- /container -->
+	
+	<script type="text/javascript" src="lib/OpenLayers-2.12/lib/OpenLayers.js"></script>
+    <script type="text/javascript" src="js/IndexedDb.js"></script>
+    <script type="text/javascript" src="js/SaveIndexedDb.js"></script>
+    <script type="text/javascript" src="js/WfstProxy.js"></script>
+    <script type="text/javascript" src="js/OsOpenSpace.js"></script>
+    <script type="text/javascript" src="js/offline-app.js"></script>
+	<script type="text/javascript" src="js/bootstrap.js"></script>
+    
+    <script type="text/javascript">
+
+(function() {
+
+    //"use strict"; //enable strict mode for whole block
+
+    document.getElementById("toggleTileCacheBtn").onclick=function(){
+    
+        console.log("toggleTileCacheBtn");
+    }
+    
+    document.getElementById("clearTileCacheBtn").onclick=function(){
+        console.log("clearTileCacheBtn");
+    }
+    
+    document.getElementById("clearFeatureCacheBtn").onclick=function(){
+        console.log("clearFeatureCacheBtn");
+    }
+
+    window.onload = init;
+    
+    
+
+
+} ());
+    </script>
+	
 </html>
 
 
