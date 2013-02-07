@@ -1,5 +1,5 @@
 var map, idbLayer, untiled;
-//OpenLayers.ProxyHost = "../proxy.cgi?url=";
+OpenLayers.ProxyHost = "/cgi-bin/proxy.cgi?url=";
 
 var DeleteFeature = OpenLayers.Class(OpenLayers.Control, {
     initialize: function(layer, options) {
