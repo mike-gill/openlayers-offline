@@ -141,6 +141,7 @@ OpenLayers.Protocol.IndexedDb = OpenLayers.Class(OpenLayers.Protocol, {
                 feature.state = event.target.result.state;
                 console.log("Label: " + feature.attributes.label);
                 console.log("Area: " + feature.geometry.getArea());
+                console.log("Feature state: " + feature.state);
             }
             callback.call(scope, feature);
         };
@@ -175,8 +176,11 @@ OpenLayers.Protocol.IndexedDb = OpenLayers.Class(OpenLayers.Protocol, {
         req.onsuccess = function(event) {
             var cursor = event.target.result;
             if (cursor) {
+            	console.log(JSON.stringify(event.target.result));
                 var feature = format.parseFeature(cursor.value);
                 feature.key = cursor.value.key;
+                feature.state = cursor.value.state;
+                console.log("State: " + feature.state);
                 if (bounds) {
                     if (bounds.intersectsBounds(feature.geometry.getBounds())) {
                         features.push(feature);

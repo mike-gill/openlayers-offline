@@ -14,7 +14,7 @@
     var featureRead;
     
     function init() {
-        idbProtocol = new OpenLayers.Protocol.IndexedDb("TestDb22", 1, "TestFeatures");
+        idbProtocol = new OpenLayers.Protocol.IndexedDb("TestDb17", 1, "TestFeatures");
         idbProtocol.openDb();
     }
     
@@ -94,7 +94,8 @@
         for (var i = 0; i < features.length; i++) {
             var txt = "";
             try {
-                textArea.value += features[i].key 
+                textArea.value += features[i].key
+                			   + "/" + features[i].state
                                + ": " 
                                + format.write(features[i]) 
                                + "\n\n";
