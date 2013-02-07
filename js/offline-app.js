@@ -159,10 +159,18 @@ function init() {
     function readWfstCallback(features) {
         var protocol = map.getLayersByName(editLayerName)[0].protocol;
         protocol.commit(features, {callback: loadWfstCallback, scope: this});
+
     }
     
     function loadWfstCallback(response) {
         console.log("WFST records inserted, response code: " + response.code);
+        for(var i = 0; i < idbLayer.strategies.length; i++) {
+        	var strategy = idbLayer.strategies[i];
+            if (strategy instanceof OpenLayers.Strategy.BBOX) {
+            	strategy.update({force: true});
+            	break;
+            }
+        }
     }
 
     panel.addControls([save, del, edit, draw, checkOutBtn]);

@@ -119,20 +119,21 @@ OpenLayers.Protocol.IndexedDb = OpenLayers.Class(OpenLayers.Protocol, {
     
     commit: function(features, options) {
         var store = this.getObjectStore(IDBTransaction.READ_WRITE);
-        this._putFeature(store, features, 0, options)
+        this._putFeature(store, features, 0, options);
     },
     
     readFeature: function(key, callback, scope) {
         var format = this.format;
-        var store = this.getObjectStore(IDBTransaction.READ_ONLY);
+        var store = this.getObjectStore("readonly");
         var req = store.get(key);
         
         req.onsuccess = function(event) {
+        	var feature = null;
             if (event.target.result == null) {
                 console.log("Feature not found");
             } else {
                 console.log(JSON.stringify(event.target.result));
-                var feature = format.parseFeature(event.target.result);
+                feature = format.parseFeature(event.target.result);
                 feature.key = event.target.result.key;
                 console.log("Label: " + feature.attributes.label);
                 console.log("Area: " + feature.geometry.getArea());
@@ -164,7 +165,7 @@ OpenLayers.Protocol.IndexedDb = OpenLayers.Class(OpenLayers.Protocol, {
         
         var features = [];
         var format = this.format;
-        var store = this.getObjectStore(IDBTransaction.READ_ONLY);
+        var store = this.getObjectStore("readonly");
         var req = store.openCursor();
         
         req.onsuccess = function(event) {
