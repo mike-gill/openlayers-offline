@@ -1,4 +1,6 @@
-var map, idbLayer, untiled;
+var map, idbLayer, untiled, cacheWrite;
+var cacheHits = 0;
+var seeding = false;
 OpenLayers.ProxyHost = "/cgi-bin/proxy.cgi?url=";
 
 var DeleteFeature = OpenLayers.Class(OpenLayers.Control, {
@@ -82,9 +84,12 @@ function init() {
 		"OS OpenSpace Layer",
 		"http://openspace.ordnancesurvey.co.uk/osmapapi/ts",
 		{ key: "CC19DCDCAA577402E0405F0ACA603788" },
-		{ isBaseLayer: true, opacity: 0.2 }
+		{ isBaseLayer: true, opacity: 0.2, eventListeners: {
+                    tileloaded: updateStatus
+                } 
+            }
 	);
-   
+    
     map.addLayers([openspaceLayer, untiled, idbLayer]);
 
     var panel = new OpenLayers.Control.Panel({
@@ -172,6 +177,43 @@ function init() {
             }
         }
     }
+    
+    // try cache before loading from remote resource
+    var cacheRead1 = new OpenLayers.Control.CacheRead({
+        eventListeners: {
+            activate: function() {
+                console.log("cacheRead1 active");
+            }
+        }
+    });
+        
+    cacheWrite = new OpenLayers.Control.CacheWrite({
+        imageFormat: "image/png",
+        eventListeners: {
+            cachefull: function() {
+                console.log("Cache full.");
+                if (!window.localStorage) { return; }
+                var i, key;
+                for (i=0; i < 10; i++) {
+                    key = window.localStorage.key(i);
+                    if (key.substr(0, 8) === "olCache_") {
+                        window.localStorage.removeItem(key);
+                    }
+                }
+                updateStatus();
+            },
+            activate: function() {
+                console.log("cacheWrite active");
+            },
+            deactivate: function() {
+                console.log("cacheWrite inactive");
+            }
+        }
+    });
+        
+    map.addControl(cacheRead1);
+    map.addControl(cacheWrite);
+    /* cache end */
 
     panel.addControls([save, del, edit, draw, checkOutBtn]);
     map.addControl(panel);

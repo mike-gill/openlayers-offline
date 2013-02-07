@@ -135,6 +135,8 @@
                 <li><a id="clearTileCacheBtn" class="btn" href="#"><i class="icon-trash"></i>Clear cache</a></li>
                 <li><a id="clearFeatureCacheBtn" class="btn" href="#"><i class="icon-retweet"></i>Clear features DB</a></li>
                 <li><a id="test" class="btn" href="#">Open attr modal</a></li>
+                <li id="cacheStatus">Status: </li>
+                <li id="cacheHits">Hits: </li>
 			
 			</div>
 		</div>
@@ -185,12 +187,18 @@ $("#toggleTileCacheBtn").click(function() {
     
     console.log("toggleTileCacheBtn");
     $("#toggleTileCacheBtn").toggleClass('btn-primary');
-    $(this).text($(this).text() == 'Cache Off' ? 'Cache On' : 'Cache Off').prepend('<i class="icon-download-alt"></i>');
-    $(this).text
+    $(this).text($(this).text() === 'Cache Off' ? 'Cache On' : 'Cache Off').prepend('<i class="icon-download-alt"></i>');
+    if(window.cacheWrite.active === true){
+        window.cacheWrite.deactivate();
+    }else{
+        window.cacheWrite.activate();
+    }
 });
 
 $("#clearTileCacheBtn").click(function() {
     console.log("clearTileCacheBtn");
+    OpenLayers.Control.CacheWrite.clearCache();
+    window.updateStatus();
 });
 
 $("#clearFeatureCacheBtn").click(function() {
@@ -200,6 +208,19 @@ $("#clearFeatureCacheBtn").click(function() {
 $("#test").click(function() {
     showInfo(null);
 });
+
+window.updateStatus = function(evt) {
+            //console.log("updateStatus")
+            if (window.localStorage) {
+                $("#cacheStatus").text(localStorage.length + " entries in cache.");
+            } else {
+                $("#cacheStatus").text("Local storage not supported. Try a different browser.");
+            }
+            if (evt && evt.tile.url.substr(0, 5) === "data:") {
+                cacheHits++;
+            }
+            $("#cacheHits").text( cacheHits + " cache hits." );
+        }
 
 window.showInfo = function(evt) {
     
