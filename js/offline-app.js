@@ -78,6 +78,11 @@ function init() {
         protocol: protocol
     });
     
+    /* global function to clear db */
+    window.clearFeatureDb = function(){
+        protocol.clearObjectStore(null);
+    }
+    
     protocol.openDb(function(){bboxStrategy.activate();}, this);
 
 	var openspaceLayer = new OpenLayers.Layer.OsOpenSpace(
@@ -85,7 +90,7 @@ function init() {
 		"http://openspace.ordnancesurvey.co.uk/osmapapi/ts",
 		{ key: "CC19DCDCAA577402E0405F0ACA603788" },
 		{ isBaseLayer: true, opacity: 0.2, eventListeners: {
-                    tileloaded: updateStatus
+                    tileloaded: updateCacheStatus
                 } 
             }
 	);
@@ -178,8 +183,9 @@ function init() {
         }
     }
     
+    /* tile caching */
     // try cache before loading from remote resource
-    var cacheRead1 = new OpenLayers.Control.CacheRead({
+    var cacheReader = new OpenLayers.Control.CacheRead({
         eventListeners: {
             activate: function() {
                 console.log("cacheRead1 active");
@@ -193,14 +199,7 @@ function init() {
             cachefull: function() {
                 console.log("Cache full.");
                 if (!window.localStorage) { return; }
-                var i, key;
-                for (i=0; i < 10; i++) {
-                    key = window.localStorage.key(i);
-                    if (key.substr(0, 8) === "olCache_") {
-                        window.localStorage.removeItem(key);
-                    }
-                }
-                updateStatus();
+                updateCacheStatus();
             },
             activate: function() {
                 console.log("cacheWrite active");
@@ -211,7 +210,7 @@ function init() {
         }
     });
         
-    map.addControl(cacheRead1);
+    map.addControl(cacheReader);
     map.addControl(cacheWrite);
     /* cache end */
 
