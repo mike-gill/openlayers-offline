@@ -179,15 +179,15 @@
     
 /* Toggles backdrop mapping tile caching */    
 $("#toggleTileCacheBtn").click(function() {
-    
+    alert('This feature is currently disabled');
     console.log("toggleTileCacheBtn");
-    $("#toggleTileCacheBtn").toggleClass('btn-primary');
-    $(this).text($(this).text() === 'Cache On' ? 'Cache Off' : 'Cache On').prepend('<i class="icon-download-alt"></i>');
-    if(window.cacheWrite.active === true){
-        window.cacheWrite.deactivate();
-    }else{
-        window.cacheWrite.activate();
-    }
+    //$("#toggleTileCacheBtn").toggleClass('btn-primary');
+    //$(this).text($(this).text() === 'Cache On' ? 'Cache Off' : 'Cache On').prepend('<i class="icon-download-alt"></i>');
+    //if(window.cacheWrite.active === true){
+    //    window.cacheWrite.deactivate();
+    //}else{
+    //    window.cacheWrite.activate();
+    //}
 });
 
 /* Clears backdrop mapping tile caching */
