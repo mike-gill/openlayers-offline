@@ -86,11 +86,16 @@ function init() {
     }
     
     protocol.openDb(function(){bboxStrategy.activate();}, this);
+	
+	/**
+	This api key is registered to disconnected.os.co.uk:9090
+	*/
+	var API_KEY = "D5ACAF5EA2F24E45E0405F0AC8602901";
 
 	var openspaceLayer = new OpenLayers.Layer.OsOpenSpace(
 		"OS OpenSpace Layer",
 		"http://openspace.ordnancesurvey.co.uk/osmapapi/ts",
-		{ key: "CC19DCDCAA577402E0405F0ACA603788" },
+		{ key: API_KEY },
 		{ isBaseLayer: true, opacity: 0.2, eventListeners: {
                     tileloaded: updateCacheStatus
                 } 
